@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: New Relic Uptime Monitor Lambda (runs every 10 minutes)
+
+Resources:
+  HostUptimePoller:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: NewRelicHostUptimePoller
+      Runtime: python3.13
+      Handler: main.lambda_handler
+      CodeUri: ./
+      MemorySize: 256
+      Timeout: 120
+      Environment:
+        Variables:
+          USER_KEY:   "YOUR_NR_USER_KEY"            # New Relic User API key
+          INGEST_KEY: "YOUR_NR_INGEST_KEY"          # New Relic Ingest API key
+          ACCOUNT_ID: "123456"                      # New Relic Account ID
+          EVENT_TYPE: "hostUptime"                  # New Relic table to post data to
+          DEBUG_LOGGING: "false"                    # Set "true" to enable debug logs
+      Events:
+        ScheduledTrigger:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0/10 * * * ? *)   # Every 10 minutes [DO NOT CHANGE]
+            Enabled: true
+            Name: NewRelicUptimeScheduleRule
+            Description: "Invoke NewRelicHostUptimePoller every 10 minutes"

@@ -129,13 +129,13 @@ The following queries can be used as starting points to dashboard the data repor
 * Uptime per host, excluding planned downtime (only `host-uptime-poller` deployed):
 
 ```
-WITH (FROM NrComputeUsage SELECT (aggregationendtime() - earliest(timestamp))/1000/60) as total_time_window_min FROM hostUptime SELECT clamp_max((sum(uptime_minutes)/latest(total_time_window_min))*100, 100) or 100 as 'Uptime %' facet hostname, guid LIMIT MAX
+WITH (FROM NrComputeUsage SELECT (aggregationendtime() - earliest(timestamp))/1000/60) as total_time_window_min FROM hostUptime SELECT clamp_max(((latest(total_time_window_min) - sum(downtime_minutes))/latest(total_time_window_min))*100, 100) or 100 as 'Uptime %' facet hostname, guid LIMIT MAX 
 ```
 
 * Uptime per host, including planned downtime (both applications deployed):
 
 ```
-WITH (FROM NrComputeUsage SELECT (aggregationendtime() - earliest(timestamp))/1000/60) as total_time_window_min FROM hostUptime LEFT JOIN (FROM hostMutedHeartbeat SELECT filter(count(*), where isMuted is true) as 'planned_downtime_minutes' facet host, guid LIMIT MAX) ON guid SELECT clamp_max(((round(latest(total_time_window_min)) - sum(downtime_minutes))/(round(latest(total_time_window_min)) - latest(planned_downtime_minutes or 0)))*100, 100) or 100 as 'Uptime %' facet hostname, guid LIMIT MAX until now
+WITH (FROM NrComputeUsage SELECT (aggregationendtime() - earliest(timestamp))/1000/60) as total_time_window_min FROM hostUptime LEFT JOIN (FROM hostMutedHeartbeat SELECT filter(count(*), where isMuted is true) as 'planned_downtime_minutes' facet host, guid LIMIT MAX) ON guid SELECT clamp_max(((round(latest(total_time_window_min)) - sum(downtime_minutes))/(round(latest(total_time_window_min)) - latest(planned_downtime_minutes or 0)))*100, 100) or 100 as 'Uptime %' facet hostname, guid LIMIT MAX
 ```
 
 ## Local Development
